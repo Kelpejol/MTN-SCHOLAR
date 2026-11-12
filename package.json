@@ -14,7 +14,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx --env-file-if-exists=.env prisma/seed.ts",
     "db:studio": "prisma studio",
-    "admin:create": "tsx --env-file-if-exists=.env scripts/create-admin.ts"
+    "admin:create": "tsx --env-file-if-exists=.env scripts/create-admin.ts",
+    "db:check": "tsx --env-file-if-exists=.env scripts/db-check.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
