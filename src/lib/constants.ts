@@ -1,7 +1,7 @@
 // Shared constants. Safe to import from both server and client components.
 
 export const BRAND = {
-  programName: "MTN Scholarship Foundation",
+  programName: "MTN Foundation Scholarship",
   poweredBy: "Dragnet",
   poweredByFull: "Dragnet Solutions",
   awardName: "Scholars' Choice Vice-Chancellor Award",

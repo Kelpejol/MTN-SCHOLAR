@@ -32,7 +32,7 @@ export const env = {
     return process.env.MAIL_FROM_ADDRESS?.trim() || "mtnfscholars@dragnet-solutions.com";
   },
   get mailFromName(): string {
-    return process.env.MAIL_FROM_NAME?.trim() || "MTN Scholarship Foundation";
+    return process.env.MAIL_FROM_NAME?.trim() || "MTN Foundation Scholarship";
   },
   get supportEmail(): string {
     return process.env.SUPPORT_EMAIL?.trim() || this.mailFromAddress;

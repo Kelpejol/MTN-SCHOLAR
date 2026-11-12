@@ -81,7 +81,7 @@ export const DEFAULT_REMINDER_TEMPLATE: ReminderTemplateInput = {
   heading: "Your vote hasn't been cast yet",
   body: `Hello {{first_name}},
 
-As a scholar of the MTN Scholarship Foundation, you're invited to choose the winner of the **Scholars' Choice Vice-Chancellor Award** — recognising the Vice-Chancellor who has shown the greatest commitment to students' welfare, learning and wellbeing.
+As a scholar of the MTN Foundation Scholarship, you're invited to choose the winner of the **Scholars' Choice Vice-Chancellor Award** — recognising the Vice-Chancellor who has shown the greatest commitment to students' welfare, learning and wellbeing.
 
 Voting closes on **{{closing_date}}**. It takes less than a minute.`,
   buttonLabel: "Cast your vote",

@@ -1,6 +1,6 @@
 # Scholars' Choice Vice-Chancellor Award — Voting Platform
 
-MTN Scholarship Foundation · powered by Dragnet
+MTN Foundation Scholarship · powered by Dragnet
 
 Scholars sign in with their **matric number**, confirm a **one-time code** sent to their registered
 email, and cast **one vote** for the Vice-Chancellor who has shown the most commitment to students'

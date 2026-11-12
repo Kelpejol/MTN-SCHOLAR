@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { CalendarClock } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/brand";
 import { LoginCard } from "@/components/voter/login-card";
-import { BRAND, TIMEZONE_LABEL } from "@/lib/constants";
+import { TIMEZONE_LABEL } from "@/lib/constants";
 import { getVoter } from "@/lib/auth";
 import { getVotingStatus } from "@/lib/voting";
 import { formatShortDay, formatTime } from "@/lib/time";
@@ -58,7 +58,7 @@ export default async function HomePage() {
               </h1>
               <p className="mt-3 hidden max-w-xl text-[15px] leading-relaxed text-zinc-600 sm:mt-4 sm:block sm:text-lg md:text-base lg:text-lg">
                 Recognising the Vice-Chancellor who has shown the greatest commitment to students&apos; welfare,
-                learning and wellbeing — chosen by you, the {BRAND.programName} beneficiaries.
+                learning and wellbeing — chosen by you, the MTN Scholars.
               </p>
             </div>
 
