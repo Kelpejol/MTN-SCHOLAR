@@ -1,0 +1,182 @@
+// Scholars' Choice Vice-Chancellor Award — voting platform data model (MySQL 8).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum GeopoliticalZone {
+  NORTH_CENTRAL
+  NORTH_EAST
+  NORTH_WEST
+  SOUTH_EAST
+  SOUTH_SOUTH
+  SOUTH_WEST
+}
+
+enum ReminderStatus {
+  SENT
+  FAILED
+}
+
+/// A scholarship beneficiary who may cast one vote. Uploaded by admins.
+model Scholar {
+  id             String        @id @default(cuid())
+  fullName       String
+  /// Canonical identifier: whitespace removed, upper-cased. Used for login.
+  matricNumber   String        @unique
+  /// The matric number as it appeared in the uploaded file (trimmed).
+  matricDisplay  String
+  email          String        @db.VarChar(254)
+  reminderCount  Int           @default(0)
+  lastRemindedAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  vote           Vote?
+  otpCodes       OtpCode[]
+  reminders      ReminderLog[]
+
+  @@index([email])
+  @@index([fullName])
+
+  @@map("mtnvc_scholar")
+}
+
+model Institution {
+  id               String            @id @default(cuid())
+  name             String
+  /// Normalised form of the name used to block exact duplicates.
+  normalizedName   String            @unique @db.VarChar(255)
+  location         String?
+  geopoliticalZone GeopoliticalZone?
+  /// Ceremony region (e.g. Lagos, Enugu, Abuja). Results are grouped by this.
+  ceremonyRegion   String?
+  /// Inactive institutions are hidden from the ballot but keep their votes.
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  votes            Vote[]
+
+  @@index([ceremonyRegion])
+
+  @@map("mtnvc_institution")
+}
+
+/// One row per scholar — the unique constraint on scholarId enforces one vote per matric number.
+model Vote {
+  id            String      @id @default(cuid())
+  scholarId     String      @unique
+  scholar       Scholar     @relation(fields: [scholarId], references: [id], onDelete: Restrict)
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  /// Free-text Vice-Chancellor name typed by the scholar. Reference only; does not affect counting.
+  vcName        String
+  ipAddress     String?
+  userAgent     String?     @db.VarChar(400)
+  createdAt     DateTime    @default(now())
+
+  @@index([institutionId])
+  @@index([createdAt])
+
+  @@map("mtnvc_vote")
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  scholarId  String
+  scholar    Scholar   @relation(fields: [scholarId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([scholarId, createdAt])
+  @@index([ipAddress, createdAt])
+
+  @@map("mtnvc_otp_code")
+}
+
+model ReminderLog {
+  id        String         @id @default(cuid())
+  scholarId String
+  scholar   Scholar        @relation(fields: [scholarId], references: [id], onDelete: Cascade)
+  status    ReminderStatus
+  error     String?        @db.VarChar(500)
+  adminId   String?
+  createdAt DateTime       @default(now())
+
+  @@index([scholarId, createdAt])
+  @@index([createdAt])
+
+  @@map("mtnvc_reminder_log")
+}
+
+model Admin {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique @db.VarChar(254)
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+
+  @@map("mtnvc_admin")
+}
+
+/// Single-row table (id = 1) holding the voting window.
+model VotingConfig {
+  id        Int      @id @default(1)
+  opensAt   DateTime
+  closesAt  DateTime
+  /// Manual emergency stop. When true, voting is closed regardless of the window.
+  isPaused  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("mtnvc_voting_config")
+}
+
+/// Single-row table (id = 1): the admin-editable reminder email. Unset = built-in default.
+model ReminderTemplate {
+  id          Int      @id @default(1)
+  subject     String
+  heading     String
+  body        String   @db.Text
+  buttonLabel String
+  showSteps   Boolean  @default(true)
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("mtnvc_reminder_template")
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String   @db.VarChar(300)
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+
+  @@map("mtnvc_login_attempt")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  admin     Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action    String
+  summary   String   @db.Text
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+
+  @@map("mtnvc_audit_log")
+}

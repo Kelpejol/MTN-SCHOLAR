@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* Brand: white, black and dark red. Light theme only by design. */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-brand-50: #fdf3f3;
+  --color-brand-100: #fbe5e6;
+  --color-brand-200: #f5c7c9;
+  --color-brand-300: #e99a9e;
+  --color-brand-400: #d4646a;
+  --color-brand-500: #b8373e;
+  --color-brand-600: #8f1d22;
+  --color-brand-700: #7a181d;
+  --color-brand-800: #631418;
+  --color-brand-900: #4a0f12;
+
+  --color-ink: #0a0a0a;
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-slide-up: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shake: shake 0.4s ease-in-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-brand-100);
+  color: var(--color-brand-900);
+}
+
+/* Native <dialog> styling */
+dialog::backdrop {
+  background: rgb(10 10 10 / 0.55);
+  backdrop-filter: blur(2px);
+}
+dialog[open] {
+  animation: slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

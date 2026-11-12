@@ -1,0 +1,22 @@
+# Local development database (MySQL 8, same engine family as production).
+services:
+  db:
+    image: mysql:8.4
+    container_name: mtn-vc-award-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mtn_scholars
+    ports:
+      - "3309:3306"
+    volumes:
+      - vcaward-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  vcaward-mysql:
