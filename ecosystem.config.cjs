@@ -1,12 +1,15 @@
-// pm2 process definition. Runs next to the other apps on the shared server, so memory is capped.
-// cwd is the `current` link that deploy/deploy.sh switches to each new release.
+// pm2 process definition for ONE colour of the blue/green deploy (see deploy/deploy.sh).
+// blue = port 3110, green = port 3111. Memory is capped because the server is shared.
+const color = process.env.APP_COLOR || "blue";
+const port = process.env.APP_PORT || (color === "green" ? "3111" : "3110");
+
 module.exports = {
   apps: [
     {
-      name: "mtn-scholars",
-      cwd: process.env.APP_CWD || "/var/www/mtn-scholars-app/current",
+      name: `mtn-scholars-${color}`,
+      cwd: process.env.APP_CWD || __dirname,
       script: "node_modules/next/dist/bin/next",
-      args: "start -p 3110 -H 127.0.0.1",
+      args: `start -p ${port} -H 127.0.0.1`,
       env: { NODE_ENV: "production", NODE_OPTIONS: "--max-old-space-size=384" },
       max_memory_restart: "450M",
       autorestart: true,

@@ -31,12 +31,13 @@ Production runs on the shared Azure server behind Apache (alongside other apps),
 Branches: **`main`** = production, **`dev`** = integration; deploy a branch with `bash deploy/deploy.sh <branch>`.
 
 Layout on the server (`/var/www/mtn-scholars-app`): `shared/.env` (production settings), `releases/<time>-<commit>/`
-(one folder per deploy, last 3 kept) and `current` → the live release. `/var/www/mtn-scholars` is only the git clone the
+(one folder per deploy, last 3 kept), `current` → the live release and `active-color` (blue/green). `/var/www/mtn-scholars` is only the git clone the
 code is taken from.
 
-**Every deploy is zero-downtime:** `bash deploy/deploy.sh main` (or `dev`) builds the new version beside the live one,
-checks the database, flips `current` (about a second), health-checks it and **rolls back automatically** if it doesn't
-respond. If the build fails, the live site is never touched.
+**Every deploy is zero-downtime (blue/green):** `bash deploy/deploy.sh main` (or `dev`) builds the new version beside
+the live one, checks the database, starts it on the spare port (blue 3110 / green 3111), health-checks it, then points
+Apache at it with a graceful reload and stops the old one. If the build or health check fails, the live site is never
+touched; if the switch fails it is reverted automatically.
 
 One-time setup (on the server):
 
@@ -60,7 +61,7 @@ One-time setup (on the server):
 
 Database safety: `npm run db:migrate` only creates `mtnvc_*` tables and refuses to run any `DROP`/`DELETE`/`TRUNCATE`.
 Never run `prisma migrate dev` or `prisma migrate reset` against the shared database. Roll back by hand with
-`ln -sfn <older release> /var/www/mtn-scholars-app/current && pm2 reload mtn-scholars`.
+re-running `bash deploy/deploy.sh` on the older commit (`git checkout`/revert on `main` first).
 
 ### ZeptoMail checklist
 - The domain `dragnet-solutions.com` must be verified in ZeptoMail (SPF + DKIM).
