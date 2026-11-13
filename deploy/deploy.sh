@@ -32,7 +32,7 @@ main() {
   git pull -q --ff-only origin "$BRANCH"
   COMMIT="$(git rev-parse --short HEAD)"
   REL="$APP_ROOT/releases/$(date +%Y%m%d-%H%M%S)-$COMMIT"
-  PREV="$(readlink -f "$CURRENT" 2>/dev/null || true)"
+  PREV=""; [ -L "$CURRENT" ] && PREV="$(readlink -f "$CURRENT")"
   echo "→ Deploying $BRANCH @ $COMMIT (currently live: ${PREV:-legacy in-place install})"
 
   AVAIL_MB=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
