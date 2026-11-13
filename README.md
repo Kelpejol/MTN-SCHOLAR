@@ -30,25 +30,37 @@ terminal so you can test the full flow.
 Production runs on the shared Azure server behind Apache (alongside other apps), with MySQL.
 Branches: **`main`** = production, **`dev`** = integration; deploy a branch with `bash deploy/deploy.sh <branch>`.
 
+Layout on the server (`/var/www/mtn-scholars-app`): `shared/.env` (production settings), `releases/<time>-<commit>/`
+(one folder per deploy, last 3 kept) and `current` → the live release. `/var/www/mtn-scholars` is only the git clone the
+code is taken from.
+
+**Every deploy is zero-downtime:** `bash deploy/deploy.sh main` (or `dev`) builds the new version beside the live one,
+checks the database, flips `current` (about a second), health-checks it and **rolls back automatically** if it doesn't
+respond. If the build fails, the live site is never touched.
+
 One-time setup (on the server):
 
-1. **Database.** Create `DATABASE_URL` for the MySQL database that will hold our tables. Azure MySQL needs TLS,
+1. **Database.** Put `DATABASE_URL` for the MySQL database that will hold our tables in `shared/.env`. Azure MySQL needs TLS,
    so append `?sslaccept=strict`, and URL-encode special characters in the password (`@` → `%40`).
    All our tables are prefixed `mtnvc_`, so they can share a database with other apps.
 2. **Code + env.**
    ```bash
-   cd /var/www && git clone https://github.com/Kelpejol/MTN-SCHOLAR.git mtn-scholars && cd mtn-scholars
-   cp .env.example .env && nano .env     # SESSION_SECRET, APP_URL, ZEPTOMAIL_TOKEN, DATABASE_URL, ADMIN_SEED_*
+   cd /var/www && git clone https://github.com/Kelpejol/MTN-SCHOLAR.git mtn-scholars
+   mkdir -p mtn-scholars-app/shared && cp mtn-scholars/.env.example mtn-scholars-app/shared/.env
+   nano mtn-scholars-app/shared/.env && chmod 600 mtn-scholars-app/shared/.env
    ```
-   Set `APP_URL=https://mtnfscholars.dragnet.ng` and `MAIL_DRY_RUN=false`.
-3. **First deploy.** `bash deploy/deploy.sh main`, then once: `npm run db:seed` (institutions, voting window, first admin).
+   Set `SESSION_SECRET`, `APP_URL=https://mtnfscholars.dragnet.ng`, `ZEPTOMAIL_TOKEN`, `DATABASE_URL`, `ADMIN_SEED_*`
+   and `MAIL_DRY_RUN=false`.
+3. **First deploy.** `cd /var/www/mtn-scholars && bash deploy/deploy.sh main`, then once, from the live release:
+   `cd /var/www/mtn-scholars-app/current && npm run db:seed` (institutions, voting window, first admin).
 4. **Apache + HTTPS.** Copy `deploy/apache-mtnfscholars.conf` to `/etc/apache2/sites-available/`, enable it, run
    `apache2ctl configtest`, reload, then `sudo certbot --apache -d mtnfscholars.dragnet.ng`.
    (DNS: an `A` record `mtnfscholars` → the server IP must exist first.)
 5. Sign in at `/admin` → **Settings → Send test email**, upload the scholars, check the voting window.
 
 Database safety: `npm run db:migrate` only creates `mtnvc_*` tables and refuses to run any `DROP`/`DELETE`/`TRUNCATE`.
-Never run `prisma migrate dev` or `prisma migrate reset` against the shared database.
+Never run `prisma migrate dev` or `prisma migrate reset` against the shared database. Roll back by hand with
+`ln -sfn <older release> /var/www/mtn-scholars-app/current && pm2 reload mtn-scholars`.
 
 ### ZeptoMail checklist
 - The domain `dragnet-solutions.com` must be verified in ZeptoMail (SPF + DKIM).
