@@ -4,8 +4,10 @@ import { getAdmin, type CurrentAdmin } from "./auth";
 
 export async function getRequestMeta(): Promise<{ ip: string | null; userAgent: string | null }> {
   const h = await headers();
+  // Behind Cloudflare the real visitor address is in CF-Connecting-IP (X-Forwarded-For's first entry
+  // can be supplied by the visitor). Fall back for local development and direct access.
   const forwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const ip = forwarded || h.get("x-real-ip")?.trim() || null;
+  const ip = h.get("cf-connecting-ip")?.trim() || forwarded || h.get("x-real-ip")?.trim() || null;
   const userAgent = h.get("user-agent")?.slice(0, 400) ?? null;
   return { ip, userAgent };
 }
