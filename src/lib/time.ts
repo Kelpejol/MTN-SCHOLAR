@@ -77,6 +77,17 @@ export function fromWatInputValue(value: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Use the same WAT validation in Settings and its server action. */
+export function validateVotingWindow(input: { opensAt: string; closesAt: string }):
+  | { ok: true; opensAt: Date; closesAt: Date }
+  | { ok: false; error: string } {
+  const opensAt = fromWatInputValue(input.opensAt);
+  const closesAt = fromWatInputValue(input.closesAt);
+  if (!opensAt || !closesAt) return { ok: false, error: "Enter valid dates and times." };
+  if (closesAt <= opensAt) return { ok: false, error: "Closing time must be after opening time." };
+  return { ok: true, opensAt, closesAt };
+}
+
 /** "20261113-0905" — used in export filenames. */
 export function fileStamp(date = new Date()): string {
   return toWatInputValue(date).replace(/[-:]/g, "").replace("T", "-");

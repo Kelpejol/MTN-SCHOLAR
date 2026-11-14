@@ -4,16 +4,9 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronsUpDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { searchComboboxOptions, type ComboboxOption } from "@/lib/combobox-search";
 
-export type ComboboxOption = { value: string; label: string; hint?: string | null };
-
-function fold(s: string) {
-  return s
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/['’`.,]/g, "");
-}
+export type { ComboboxOption } from "@/lib/combobox-search";
 
 type Props = {
   id?: string;
@@ -61,20 +54,12 @@ export function Combobox({
 
   const selected = options.find((o) => o.value === value) ?? null;
 
-  const indexed = useMemo(
-    () => options.map((o) => ({ option: o, haystack: fold(`${o.label} ${o.hint ?? ""}`) })),
-    [options],
-  );
-  const filtered = useMemo(() => {
-    const terms = fold(query).split(/\s+/).filter(Boolean);
-    if (!terms.length) return options;
-    return indexed.filter(({ haystack }) => terms.every((t) => haystack.includes(t))).map((x) => x.option);
-  }, [query, indexed, options]);
+  const filtered = useMemo(() => searchComboboxOptions(options, query), [options, query]);
 
   function openList() {
     if (disabled) return;
     setQuery("");
-    const idx = selected ? options.findIndex((o) => o.value === selected.value) : 0;
+    const idx = selected ? searchComboboxOptions(options, "").findIndex((o) => o.value === selected.value) : 0;
     setActive(Math.max(0, idx));
     setAsSheet(window.matchMedia("(max-width: 639px)").matches);
     setOpen(true);
@@ -122,9 +107,10 @@ export function Combobox({
   }, [active, open]);
 
   function onSearchKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((i) => Math.min(i + 1, filtered.length - 1));
+      setActive((i) => Math.max(0, Math.min(i + 1, filtered.length - 1)));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((i) => Math.max(i - 1, 0));
@@ -133,7 +119,7 @@ export function Combobox({
       setActive(0);
     } else if (e.key === "End") {
       e.preventDefault();
-      setActive(filtered.length - 1);
+      setActive(Math.max(0, filtered.length - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
       const option = filtered[active];
@@ -216,7 +202,7 @@ export function Combobox({
                   onClick={() => choose(option)}
                   className={cn(
                     "flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-3 sm:py-2.5",
-                    index === active && "bg-zinc-100",
+                    index === active && "bg-brand-50 text-brand-900 ring-1 ring-brand-200 ring-inset",
                   )}
                 >
                   <span className="min-w-0">

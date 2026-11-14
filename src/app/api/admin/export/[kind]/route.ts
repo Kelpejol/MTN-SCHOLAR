@@ -5,6 +5,7 @@ import { getResults } from "@/lib/results";
 import { fileStamp, formatDateTime } from "@/lib/time";
 import { UNASSIGNED_REGION, zoneLabel } from "@/lib/constants";
 import { logAudit } from "@/lib/audit";
+import { getVotingStatus } from "@/lib/voting";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -49,7 +50,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/admin/export
       break;
     }
     case "results": {
-      const { regions } = await getResults();
+      const [{ regions }, status] = await Promise.all([getResults(), getVotingStatus()]);
+      const final = status.state === "closed";
       const rows = regions.flatMap((r) =>
         r.institutions.map((inst) => [
           r.region,
@@ -58,7 +60,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/admin/export
           inst.votes,
           `${(inst.share * 100).toFixed(1)}%`,
           r.totalVotes,
-          inst.isLeader ? (r.leaders.length > 1 ? "Tied for first" : "Winner") : "",
+          inst.isLeader ? (r.leaders.length > 1 ? "Tied for first" : final ? "Winner" : "Leading") : "",
         ]),
       );
       response = csvResponse(

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Alert } from "@/components/ui/misc";
 import { cn, formatNumber, pluralize } from "@/lib/utils";
+import { getScholarFileTypeError } from "@/lib/scholar-file";
 import { DownloadLink } from "@/components/ui/download-link";
 
 type Issue = { rowNumber: number; message: string };
@@ -64,8 +65,9 @@ export function UploadScholarsDialog({ open, onClose }: { open: boolean; onClose
   }
 
   async function check(file: File) {
-    if (!/\.(csv|xlsx)$/i.test(file.name)) {
-      setState({ phase: "pick", error: "Upload a .csv or .xlsx file." });
+    const typeError = getScholarFileTypeError(file.name);
+    if (typeError) {
+      setState({ phase: "pick", error: typeError });
       return;
     }
     setState({ phase: "checking", file });

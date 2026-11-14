@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Bell, Download, FileDown, Pencil, Plus, Trash2, Upload, Users } from "lucide-react";
@@ -328,6 +328,10 @@ function ScholarFormDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const key = scholar?.id ?? "new";
+  const formId = useId();
+  const nameId = `${formId}-fullName`;
+  const matricId = `${formId}-matric`;
+  const emailId = `${formId}-email`;
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -365,29 +369,29 @@ function ScholarFormDialog({
           <Button variant="secondary" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
-          <Button type="submit" form="scholar-form" loading={pending}>
+          <Button type="submit" form={formId} loading={pending}>
             {scholar ? "Save changes" : "Add scholar"}
           </Button>
         </>
       }
     >
-      <form id="scholar-form" key={key} onSubmit={submit} className="space-y-4" noValidate>
+      <form id={formId} key={key} onSubmit={submit} className="space-y-4" noValidate>
         {error && <Alert tone="error">{error}</Alert>}
         {scholar?.voted && (
           <Alert tone="info">This scholar has already voted. Their vote stays linked to them after editing.</Alert>
         )}
         <div>
-          <Label htmlFor="fullName">Full name</Label>
-          <Input id="fullName" name="fullName" defaultValue={scholar?.fullName} required autoFocus />
+          <Label htmlFor={nameId}>Full name</Label>
+          <Input id={nameId} name="fullName" defaultValue={scholar?.fullName} required autoFocus />
         </div>
         <div>
-          <Label htmlFor="matric">Matric number</Label>
-          <Input id="matric" name="matric" defaultValue={scholar?.matric} required className="font-mono" />
+          <Label htmlFor={matricId}>Matric number</Label>
+          <Input id={matricId} name="matric" defaultValue={scholar?.matric} required className="font-mono" />
           <FieldHint>Scholars sign in with this. Spaces and letter case are ignored.</FieldHint>
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" defaultValue={scholar?.email} required />
+          <Label htmlFor={emailId}>Email</Label>
+          <Input id={emailId} name="email" type="email" defaultValue={scholar?.email} required />
           <FieldHint>One-time codes and reminders are sent here.</FieldHint>
         </div>
       </form>

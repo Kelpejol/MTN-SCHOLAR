@@ -70,7 +70,7 @@ export default async function VotesPage({ searchParams }: PageProps<"/admin/vote
     <>
       <PageHeader
         title="Votes"
-        description={`${formatNumber(total)} ${total === 1 ? "vote" : "votes"}${q || region || institution ? " match your filters" : " recorded"}. Each matric number can vote once.`}
+        description={`${formatNumber(total)} ${total === 1 ? "vote" : "votes"}${q || region || institution ? (total === 1 ? " matches your filters" : " match your filters") : " recorded"}. Each matric number can vote once.`}
         actions={
           <DownloadLink href="/api/admin/export/votes" variant="primary">
             <Download className="size-4" /> Export all votes

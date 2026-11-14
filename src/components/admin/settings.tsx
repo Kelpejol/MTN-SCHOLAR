@@ -6,8 +6,9 @@ import { toast } from "sonner";
 import { CalendarClock, KeyRound, Mail, PauseCircle, PlayCircle, Shield, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { FieldHint, Input, Label } from "@/components/ui/field";
+import { FieldError, FieldHint, Input, Label } from "@/components/ui/field";
 import { Alert, Badge, Card } from "@/components/ui/misc";
+import { validateVotingWindow } from "@/lib/time";
 import {
   changeOwnPassword,
   createAdmin,
@@ -62,6 +63,8 @@ export function VotingWindowCard({
   const [saving, startSave] = useTransition();
   const [toggling, startToggle] = useTransition();
   const dirty = open !== opensAt || close !== closesAt;
+  const validation = validateVotingWindow({ opensAt: open, closesAt: close });
+  const windowError = validation.ok ? null : validation.error;
 
   const tone = { open: "success", scheduled: "warning", paused: "warning", closed: "neutral" } as const;
   const label = { open: "Open", scheduled: "Scheduled", paused: "Paused", closed: "Closed" };
@@ -80,6 +83,7 @@ export function VotingWindowCard({
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
+          if (!validation.ok) return;
           startSave(async () => {
             const res = await updateVotingWindow({ opensAt: open, closesAt: close });
             if (!res.ok) toast.error(res.error);
@@ -97,11 +101,20 @@ export function VotingWindowCard({
           </div>
           <div>
             <Label htmlFor="closesAt">Closes (WAT)</Label>
-            <Input id="closesAt" type="datetime-local" value={close} onChange={(e) => setClose(e.target.value)} required />
+            <Input
+              id="closesAt"
+              type="datetime-local"
+              value={close}
+              onChange={(e) => setClose(e.target.value)}
+              required
+              invalid={!!windowError}
+              aria-describedby={windowError ? "voting-window-error" : undefined}
+            />
           </div>
         </div>
+        <FieldError id="voting-window-error">{windowError}</FieldError>
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="dark" loading={saving} disabled={!dirty}>
+          <Button type="submit" variant="dark" loading={saving} disabled={!dirty || !!windowError}>
             Save window
           </Button>
           <Button

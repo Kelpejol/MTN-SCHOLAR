@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d",
     "db:migrate": "tsx --env-file-if-exists=.env scripts/db-migrate.ts",

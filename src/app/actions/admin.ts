@@ -12,7 +12,7 @@ import { clearAdminSession, setAdminSession } from "@/lib/session";
 import { CEREMONY_REGION_VALUES, GEOPOLITICAL_ZONES, LIMITS } from "@/lib/constants";
 import { findSimilarInstitutions, normalizeInstitutionName, type InstitutionMatch } from "@/lib/institution-match";
 import { cleanText, isValidEmail, normalizeEmail, normalizeMatric } from "@/lib/utils";
-import { formatFullMoment, fromWatInputValue } from "@/lib/time";
+import { formatFullMoment, validateVotingWindow } from "@/lib/time";
 import { sendMail } from "@/lib/mail/zeptomail";
 import { reminderEmail, testEmail } from "@/lib/mail/templates";
 import { PLACEHOLDERS, reminderTemplateSchema, type ReminderTemplateInput } from "@/lib/mail/placeholders";
@@ -228,10 +228,9 @@ export async function deleteScholar(id: string): Promise<ActionResult> {
 
 export async function updateVotingWindow(input: { opensAt: string; closesAt: string }): Promise<ActionResult> {
   const admin = await requireAdmin();
-  const opensAt = fromWatInputValue(input.opensAt);
-  const closesAt = fromWatInputValue(input.closesAt);
-  if (!opensAt || !closesAt) return { ok: false, error: "Enter valid dates and times." };
-  if (closesAt <= opensAt) return { ok: false, error: "Closing time must be after opening time." };
+  const parsed = validateVotingWindow(input);
+  if (!parsed.ok) return parsed;
+  const { opensAt, closesAt } = parsed;
   await prisma.votingConfig.upsert({
     where: { id: 1 },
     update: { opensAt, closesAt },

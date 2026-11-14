@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,8 @@ const widths = { sm: "sm:max-w-md", md: "sm:max-w-lg", lg: "sm:max-w-2xl", xl: "
 
 /** Accessible modal built on the native <dialog> element. Renders as a bottom sheet on phones. */
 export function Dialog({ open, onClose, title, description, children, footer, locked, size = "md" }: DialogProps) {
+  const titleId = useId();
+  const descriptionId = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const lockedRef = useRef(locked);
   const onCloseRef = useRef(onClose);
@@ -50,7 +52,8 @@ export function Dialog({ open, onClose, title, description, children, footer, lo
   return (
     <dialog
       ref={ref}
-      aria-labelledby="dialog-title"
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
       onClick={(e) => {
         if (e.target === ref.current && !locked) onClose();
       }}
@@ -68,10 +71,10 @@ export function Dialog({ open, onClose, title, description, children, footer, lo
       >
         <div className="flex items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <h2 id="dialog-title" className="text-lg font-semibold tracking-tight">
+            <h2 id={titleId} className="text-lg font-semibold tracking-tight">
               {title}
             </h2>
-            {description && <div className="mt-1 text-sm text-zinc-500">{description}</div>}
+            {description && <div id={descriptionId} className="mt-1 text-sm text-zinc-500">{description}</div>}
           </div>
           <button
             type="button"

@@ -3,6 +3,7 @@ import Papa from "papaparse";
 import readXlsxFile from "read-excel-file/node";
 import { LIMITS } from "./constants";
 import { cleanText, isValidEmail, normalizeEmail, normalizeMatric } from "./utils";
+import { getScholarFileTypeError } from "./scholar-file";
 
 export const REQUIRED_COLUMNS = ["Full Name", "Matric Number", "Email"] as const;
 
@@ -78,8 +79,10 @@ async function readTable(file: File): Promise<{ sheetName: string | null; rows: 
   const name = file.name.toLowerCase();
   if (file.size === 0) throw new ImportFileError("The file is empty.");
   if (file.size > LIMITS.uploadMaxBytes) throw new ImportFileError("The file is larger than 5 MB.");
+  const typeError = getScholarFileTypeError(file.name);
+  if (typeError) throw new ImportFileError(typeError);
 
-  if (name.endsWith(".csv") || file.type === "text/csv") {
+  if (name.endsWith(".csv")) {
     const text = (await file.text()).replace(/^﻿/, "");
     const parsed = Papa.parse<string[]>(text, { skipEmptyLines: "greedy" });
     if (parsed.errors.length && !parsed.data.length) {
@@ -88,25 +91,18 @@ async function readTable(file: File): Promise<{ sheetName: string | null; rows: 
     return { sheetName: null, rows: parsed.data.map((r) => r.map(cellToString)) };
   }
 
-  if (name.endsWith(".xlsx")) {
-    let sheets: { sheet: string; data: unknown[][] }[];
-    try {
-      sheets = await readXlsxFile(Buffer.from(await file.arrayBuffer()));
-    } catch {
-      throw new ImportFileError("Could not read the Excel file. Please re-save it as .xlsx or .csv.");
-    }
-    const asStrings = sheets.map((s) => ({
-      sheetName: s.sheet,
-      rows: s.data.map((r) => r.map(cellToString)),
-    }));
-    const withColumns = asStrings.find((s) => findHeaderRow(s.rows).complete);
-    return withColumns ?? asStrings[0] ?? { sheetName: null, rows: [] };
+  let sheets: { sheet: string; data: unknown[][] }[];
+  try {
+    sheets = await readXlsxFile(Buffer.from(await file.arrayBuffer()));
+  } catch {
+    throw new ImportFileError("Could not read the Excel file. Please re-save it as .xlsx or .csv.");
   }
-
-  if (name.endsWith(".xls")) {
-    throw new ImportFileError("Old .xls files aren't supported. Please save the file as .xlsx or .csv.");
-  }
-  throw new ImportFileError("Unsupported file type. Upload a .csv or .xlsx file.");
+  const asStrings = sheets.map((s) => ({
+    sheetName: s.sheet,
+    rows: s.data.map((r) => r.map(cellToString)),
+  }));
+  const withColumns = asStrings.find((s) => findHeaderRow(s.rows).complete);
+  return withColumns ?? asStrings[0] ?? { sheetName: null, rows: [] };
 }
 
 function findHeaderRow(rows: string[][]) {
