@@ -27,7 +27,7 @@ export type OtpRequestResult =
 
 export type VerifyResult = { ok: true } | { ok: false; error: string; expired?: boolean };
 
-export type VoteResult = { ok: false; error: string; alreadyVoted?: boolean } | undefined;
+export type VoteResult = { ok: false; error: string; alreadyVoted?: boolean; sessionExpired?: boolean } | undefined;
 
 const GENERIC_SEND_ERROR =
   "We couldn't send your code just now. Please wait a moment and try again.";
@@ -193,7 +193,7 @@ export async function verifyOtp(rawCode: string): Promise<VerifyResult> {
 
 export async function submitVote(input: { institutionId: string; vcName: string }): Promise<VoteResult> {
   const session = await readVoterSession();
-  if (!session) return { ok: false, error: "Your session has expired. Please sign in again." };
+  if (!session) return { ok: false, sessionExpired: true, error: "Your session has expired. Please sign in again." };
 
   const status = await getVotingStatus();
   if (status.state !== "open") return { ok: false, error: status.message };
@@ -216,7 +216,7 @@ export async function submitVote(input: { institutionId: string; vcName: string 
     where: { id: session.sid },
     select: { id: true, fullName: true, email: true, matricDisplay: true, vote: { select: { id: true } } },
   });
-  if (!scholar) return { ok: false, error: "Your session has expired. Please sign in again." };
+  if (!scholar) return { ok: false, sessionExpired: true, error: "Your session has expired. Please sign in again." };
   if (scholar.vote) return { ok: false, alreadyVoted: true, error: "You have already voted." };
 
   const { ip, userAgent } = await getRequestMeta();

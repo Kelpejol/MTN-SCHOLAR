@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ArrowRight, Building2, CheckCircle2, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { FieldError, FieldHint, Input, Label } from "@/components/ui/field";
 import { Alert } from "@/components/ui/misc";
@@ -19,6 +20,7 @@ export function BallotForm({ institutions, firstName }: { institutions: Institut
   const [vcName, setVcName] = useState("");
   const [errors, setErrors] = useState<{ institution?: string; vcName?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [pending, startTransition] = useTransition();
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +61,7 @@ export function BallotForm({ institutions, firstName }: { institutions: Institut
           return;
         }
         setSubmitError(res.error);
+        setSessionExpired(!!res.sessionExpired);
       }
     });
   }
@@ -195,20 +198,28 @@ export function BallotForm({ institutions, firstName }: { institutions: Institut
           )}
 
           <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-            <Button
-              variant="secondary"
-              size="lg"
-              disabled={pending}
-              onClick={() => {
-                setStep("edit");
-                scrollTop();
-              }}
-            >
-              <ArrowLeft className="size-4" /> Go back and edit
-            </Button>
-            <Button size="lg" loading={pending} onClick={confirm}>
-              {pending ? "Submitting…" : "Confirm and submit vote"}
-            </Button>
+            {sessionExpired ? (
+              <Link href="/" prefetch={false} className={buttonClasses("primary", "lg")}>
+                Sign in again
+              </Link>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  disabled={pending}
+                  onClick={() => {
+                    setStep("edit");
+                    scrollTop();
+                  }}
+                >
+                  <ArrowLeft className="size-4" /> Go back and edit
+                </Button>
+                <Button size="lg" loading={pending} onClick={confirm}>
+                  {pending ? "Submitting…" : "Confirm and submit vote"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

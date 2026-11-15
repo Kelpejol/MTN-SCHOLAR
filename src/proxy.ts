@@ -21,6 +21,11 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/vote")) {
+    // Actions authenticate themselves and return errors the ballot can display. Redirecting
+    // their POST here produces a page response where the client expects an action response.
+    if (request.method === "POST" && request.headers.has("next-action")) {
+      return NextResponse.next();
+    }
     const voter = await verifyToken<VoterToken>(request.cookies.get(COOKIES.voter)?.value, "voter");
     if (!voter) return NextResponse.redirect(new URL("/", request.url));
   }
